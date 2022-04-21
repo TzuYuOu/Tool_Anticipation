@@ -1,6 +1,6 @@
 import torch
 from torch import nn, optim
-from networks import LSTMAlexNet
+from networks import LSTMAlexNet, LSTMResNet
 import util_traintest as util
 import os
 import numpy as np
@@ -16,7 +16,12 @@ class AnticipationModel:
 		
         
 		output_size = opts.num_ins*opts.num_class + opts.num_ins
-		self.net = LSTMAlexNet(output_size,pretrain=pretrain).cuda()
+		if opts.model == 'alexnet':
+			self.net = LSTMAlexNet(output_size,pretrain=pretrain).cuda()
+		elif opts.model == 'resnet':
+			self.net = LSTMResNet(output_size,pretrain=pretrain).cuda()
+		else:
+			raise NotImplementedError('model is not implemented')
 
 		if train:
 			self.criterion_reg = nn.SmoothL1Loss(reduction='mean')

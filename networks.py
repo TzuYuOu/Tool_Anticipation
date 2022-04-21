@@ -1,11 +1,11 @@
 import torch
 from torch import nn
-import torchvision.models.alexnet
+import torchvision.models as models
 
 class FeatureAlexNet(nn.Module):
   def __init__(self, num_features = 4096):
     super().__init__()
-    self.alexnet = torchvision.models.alexnet(pretrained=True)
+    self.alexnet = models.alexnet(pretrained=True)
     self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
     self.fc = nn.Sequential(nn.Linear(256 * 6 * 6, num_features),nn.ReLU(inplace=True))
   
@@ -22,6 +22,29 @@ class FeatureAlexNet(nn.Module):
 
   def save(self, model_file):
     torch.save(self.state_dict(), model_file)
+
+class FeatureResNet(nn.Module):
+  def __init__(self, num_features=1024):
+    super().__init__()
+    self.resnet = models.resnet50(pretrained=True)
+    self.fc = nn.Sequential(nn.Linear(2048, num_features),nn.ReLU(inplace=True))
+  
+  def forward(self, x):
+    x = self.resnet.conv1(x)
+    x = self.resnet.bn1(x)
+    x = self.resnet.relu(x)
+    x = self.resnet.maxpool(x)
+
+    x = self.resnet.layer1(x)
+    x = self.resnet.layer2(x)
+    x = self.resnet.layer3(x)
+    x = self.resnet.layer4(x)
+
+    x = self.resnet.avgpool(x)
+    x = x.view(x.size(0), -1)
+    x = self.fc(x)
+    
+    return x
 
 class LSTM(nn.Module):
   def __init__(self, input_size, hidden_size):
@@ -75,6 +98,34 @@ class LSTMAlexNet(nn.Module):
 
   def save(self, model_file):
     torch.save(self.state_dict(), model_file)
+
+class LSTMResNet(nn.Module):
+  def __init__(self, num_classes, lstm_size=512, lstm_input_size=1024, pretrain=None):
+    super().__init__()
+    self.featureNet = FeatureResNet(num_features=lstm_input_size)
+    self.lstm = LSTM(lstm_input_size, lstm_size)
+    self.classifier = nn.Linear(lstm_size, num_classes)
+
+    if pretrain is not None:
+      self.load(pretrain)
+
+  def forward(self, x, hidden_state):
+    x = self.featureNet.forward(x)
+    x = x.view(x.size(0), 1, -1)
+    x, hidden_state = self.lstm(x, hidden_state)
+    x = x.view(x.size(0), -1)
+    x = self.classifier(x)
+    return x, hidden_state
+
+  def init_hidden(self):
+    return self.lstm.init_hidden()
+
+  def load(self, model_file):
+    self.load_state_dict(torch.load(model_file))
+
+  def save(self, model_file):
+    torch.save(self.state_dict(), model_file)
+
 
 
 

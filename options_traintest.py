@@ -16,6 +16,7 @@ parser.add_argument('--num_ins', type=int, default=5)
 parser.add_argument('--drop_prob', type=float, default=.2)
 parser.add_argument('--horizon', type=int, default=2)
 # training
+parser.add_argument('--model', type=str, choices=['alexnet', 'resnet'], default='resnet')
 parser.add_argument('--epochs', type=int, default=20)
 parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--lr', type=float, default=1e-4)
