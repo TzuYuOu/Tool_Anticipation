@@ -4,6 +4,7 @@ from networks import LSTMAlexNet
 import util_traintest as util
 import os
 import numpy as np
+import time
 
 class AnticipationModel:
 
@@ -91,7 +92,7 @@ class AnticipationModel:
 			self.test_reg/self.test_count,
 			self.test_cls/self.test_count
 		)
-
+		print(time.strftime("[%d.%m.%Y %H:%M:%S]"))
 		print(log_message)
 		log_file.write(log_message + '\n')
 
