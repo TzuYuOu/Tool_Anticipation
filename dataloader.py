@@ -81,8 +81,9 @@ class Cholec80Anticipation(data.Dataset):
 		frame = self.image_path + "/frame%08d.jpg" % (index+self.offset)
 		img = Image.open(frame)
 		img = self.transform(img)
+		t_elapsed = index/60
 
-		return img, target_reg, target_cls
+		return img, target_reg, target_cls, t_elapsed
 
 	def __len__(self):
 		return len(self.target_reg)

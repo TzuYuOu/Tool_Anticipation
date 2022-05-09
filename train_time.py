@@ -1,12 +1,12 @@
 import torch
 from dataloader import prepare_dataset
-from model import AnticipationModel
+from model import TimeModel
 from options_traintest import parser
 import time
 
 opts = parser.parse_args()
 train_set, test_set = prepare_dataset(opts)
-model = AnticipationModel(opts)
+model = TimeModel(opts)
 start_time = time.time()
 
 with open(model.log_path, "w") as log_file:
@@ -18,13 +18,13 @@ with open(model.log_path, "w") as log_file:
 
 		for _,op in train_set:
 
-			hidden_state = model.init_op('train')
+			model.init_op('train')
 
-			for batch,(data,target_reg,target_cls, _) in enumerate(op):
+			for batch,(data,target_reg,target_cls, t_elapsed) in enumerate(op):
+				t_elapsed = t_elapsed.to(torch.float32)
+				data, target_reg, target_cls, t_elapsed = data.cuda(), target_reg.cuda(), target_cls.cuda(), t_elapsed.cuda()
 
-				data, target_reg, target_cls = data.cuda(), target_reg.cuda(), target_cls.cuda()
-
-				output_reg, output_cls, hidden_state = model.forward(data,hidden_state)
+				output_reg, output_cls = model.forward(data,t_elapsed)
 				loss = model.compute_loss(output_reg,output_cls,target_reg,target_cls)
 				model.backward(loss,batch)
 
@@ -50,11 +50,11 @@ with open(model.log_path, "w") as log_file:
 
 			for ID,op in test_set:
 
-				hidden_state = model.init_op('test')
+				model.init_op('test')
 
-				for data,target_reg,target_cls,_ in op:
-
-					data, target_reg, target_cls = data.cuda(), target_reg.cuda(), target_cls.cuda()
+				for data,target_reg,target_cls,t_elapsed in op:
+					t_elapsed = t_elapsed.to(torch.float32)
+					data, target_reg, target_cls = data.cuda(), target_reg.cuda(), target_cls.cuda(), t_elapsed.cuda()
 
 					output_reg, output_cls, hidden_state = model.forward(data,hidden_state)
 					loss = model.compute_loss(output_reg,output_cls,target_reg,target_cls)

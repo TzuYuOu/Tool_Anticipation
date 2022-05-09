@@ -2,3 +2,5 @@ output/
 cholec80/
 __pycache__/
 cholec80.rar
+env/
+ant_cholec80.rar
